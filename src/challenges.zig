@@ -29,9 +29,10 @@ fn hexToBytes(allocator: *std.mem.Allocator, hex: []const u8) ![]const u8 {
 
 // TODO(mairbek): implement base64 encoding in Zig.
 pub fn convertHexToBase64(allocator: *std.mem.Allocator, hex: []const u8) ![]const u8 {
-    var buffer: [0x100]u8 = undefined;
     const b = try hexToBytes(allocator, hex);
     defer allocator.free(b);
-    const encoded = std.base64.standard.Encoder.encode(&buffer, b);
+    const len = std.base64.standard.Encoder.calcSize(b.len);
+    const buffer = try allocator.alloc(u8, len);
+    const encoded = std.base64.standard.Encoder.encode(buffer, b);
     return encoded;
 }
