@@ -1,1 +1,1 @@
-solving https://cryptopals.com
+solving https://cryptopals.com in zig.
