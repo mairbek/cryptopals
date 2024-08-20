@@ -80,20 +80,8 @@ pub fn fixedXor(allocator: *std.mem.Allocator, a: []const u8, b: []const u8) ![]
     return hex;
 }
 
-pub fn computeDistribution(bytes: []const u8) f32 {
-    var result: [27]u8 = [_]u8{0} ** 27;
-    var sum: u8 = 0;
-    for (bytes) |byte| {
-        if (byte >= 'a' and byte <= 'z') {
-            result[byte - 'a'] += 1;
-        } else if (byte >= 'A' and byte <= 'Z') {
-            result[byte - 'A'] += 1;
-        } else {
-            result[26] += 1;
-        }
-        sum += 1;
-    }
-    const letterDistribution: [27]f32 = [_]f32{
+pub fn calculateScore(bytes: []const u8) f32 {
+    const letterDistribution: [26]f32 = [_]f32{
         8.167, // a
         1.492, // b
         2.782, // c
@@ -120,17 +108,55 @@ pub fn computeDistribution(bytes: []const u8) f32 {
         0.150, // x
         1.974, // y
         0.074, // z
-        0.0, // other
     };
-
-    var norm: [27]f32 = [_]f32{0.0} ** 27;
-    var score: f32 = 0.0;
-    for (0..27) |i| {
-        norm[i] = @as(f32, @floatFromInt(result[i])) / @as(f32, @floatFromInt(sum));
-        // std.debug.print("Norm {d:.3} / {d:.3} = {d:.3} \n", .{ @as(f32, @floatFromInt(result[i])), @as(f32, @floatFromInt(sum)), norm[i] });
-        const err: f32 = norm[i] - (letterDistribution[i] / 100.0);
-        score += (err * err);
-        // std.debug.print("{any} Score: {d:.3} err {d:.3}' \n", .{ i, score, err });
+    var result: f32 = 0;
+    for (bytes) |b| {
+        if (b >= 'a' and b <= 'z') {
+            result += letterDistribution[b - 'a'];
+        } else if (b >= 'A' and b <= 'Z') {
+            result += letterDistribution[b - 'A'];
+        } else if (b == ' ') {
+            result += 20.0;
+        }
     }
-    return score;
+    return result;
 }
+
+pub fn maxScore(bytes: []const u8) !struct { u8, f32 } {
+    var allocator = std.heap.page_allocator;
+
+    var maxS: f32 = 0;
+    var maxI: u8 = 0;
+    var i: u8 = 0;
+    while (i < 26) : (i += 1) {
+        const ch: u8 = 'A' + i;
+        const candidate = try xor(&allocator, bytes, ch);
+        const score = calculateScore(candidate);
+        if (score > maxS) {
+            maxS = score;
+            maxI = i;
+        }
+    }
+    return .{ maxI, maxS };
+}
+
+// pub fn minScore(bytes: []const u8) !struct { f32, u8 } {
+//     var allocator = std.heap.page_allocator;
+
+//     var minS: f32 = 1000;
+//     var minI: u8 = 0;
+
+//     var i: u8 = 0;
+//     while (i < 26) : (i += 1) {
+//         const ch: u8 = 'A' + i;
+//         const candidate = try xor(&allocator, bytes, ch);
+//         defer allocator.free(candidate);
+//         const score = computeDistribution(candidate);
+//         if (score < minS) {
+//             minS = score;
+//             minI = i;
+//         }
+//     }
+
+//     return .{ minS, minI };
+// }

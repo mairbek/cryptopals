@@ -12,22 +12,30 @@ pub fn main() !void {
     defer allocator.free(challenge2);
     std.debug.print("Challenge 2 {s} \n", .{challenge2});
 
-    var i: u8 = 0;
     const challenge3bytes = try challeges.hexToBytes(&allocator, "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736");
-    var minScore: f32 = 100.0;
-    var minChar: u8 = 'A';
-    while (i < 26) {
-        const ch: u8 = 'A' + i;
+    const min = try challeges.maxScore(challenge3bytes);
+    const res = try challeges.xor(&allocator, challenge3bytes, 'A' + min[0]);
+    std.debug.print("Challenge 3 '{s}' {c} {d:.3}\n", .{ res, 'A' + min[0], min[1] });
 
-        const candidate = try challeges.xor(&allocator, challenge3bytes, ch);
-        defer allocator.free(candidate);
+    // // Get the current working directory
+    // const cwd = std.fs.cwd();
+    // const file = try cwd.openFile("4.txt", .{});
+    // defer file.close();
 
-        const score: f32 = challeges.computeDistribution(candidate);
-        if (score < minScore) {
-            minScore = score;
-            minChar = ch;
-        }
-        i += 1;
-    }
-    std.debug.print("Challenge 3 {c} \n", .{minChar});
+    // // Create a buffered reader
+    // var buf_reader = std.io.bufferedReader(file.reader());
+    // var in_stream = buf_reader.reader();
+
+    // // Create a buffer for reading lines
+    // var buf: [1024]u8 = undefined;
+    // // Read lines
+    // while (try in_stream.readUntilDelimiterOrEof(&buf, '\n')) |line| {
+    //     // Process each line
+    //     const mm = try challeges.minScore(line);
+    //     if (mm[0] < 0.09) {
+    //         const candidate = try challeges.xor(&allocator, line, 'A' + mm[1]);
+    //         defer allocator.free(candidate);
+    //         std.debug.print("GOTCHA: {s} -- {d:.3} \n", .{ candidate, mm[0] });
+    //     }
+    // }
 }
