@@ -139,24 +139,3 @@ pub fn maxScore(bytes: []const u8) !struct { u8, f32 } {
     }
     return .{ maxI, maxS };
 }
-
-// pub fn minScore(bytes: []const u8) !struct { f32, u8 } {
-//     var allocator = std.heap.page_allocator;
-
-//     var minS: f32 = 1000;
-//     var minI: u8 = 0;
-
-//     var i: u8 = 0;
-//     while (i < 26) : (i += 1) {
-//         const ch: u8 = 'A' + i;
-//         const candidate = try xor(&allocator, bytes, ch);
-//         defer allocator.free(candidate);
-//         const score = computeDistribution(candidate);
-//         if (score < minS) {
-//             minS = score;
-//             minI = i;
-//         }
-//     }
-
-//     return .{ minS, minI };
-// }
