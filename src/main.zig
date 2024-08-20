@@ -14,9 +14,9 @@ pub fn main() !void {
 
     const challenge3bytes = try challeges.hexToBytes(&allocator, "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736");
     defer allocator.free(challenge3bytes);
-    const min = try challeges.maxScore(challenge3bytes);
-    const res = try challeges.xor(&allocator, challenge3bytes, 'A' + min[0]);
-    std.debug.print("Challenge 3 '{s}' {c} {d:.3}\n", .{ res, 'A' + min[0], min[1] });
+    const min = try challeges.maxScore(challenge3bytes, 'A', 'Z');
+    const res = try challeges.xor(&allocator, challenge3bytes, min[0]);
+    std.debug.print("Challenge 3 '{s}' {c} {d:.3}\n", .{ res, min[0], min[1] });
 
     // Get the current working directory
     const cwd = std.fs.cwd();
@@ -30,24 +30,22 @@ pub fn main() !void {
     // Create a buffer for reading lines
     var buf: [1024]u8 = undefined;
     // Read lines
-    var lines = std.ArrayList([]const u8).init(allocator);
-    defer lines.deinit();
+    var maxScore: f32 = 0;
+    var charI: u8 = 0;
+    var lineI: []const u8 = undefined;
     while (try in_stream.readUntilDelimiterOrEof(&buf, '\n')) |line| {
         const line_bytes = try challeges.hexToBytes(&allocator, line);
-        try lines.append(line_bytes);
-    }
-    var maxScore: f32 = 0;
-    var lineI: usize = 0;
-    var charI: u8 = 0;
-    for (0.., lines.items) |i, line_bytes| {
-        const mm = try challeges.maxScore(line_bytes);
+        const mm = try challeges.maxScore(line_bytes, 0, 0xfe);
         if (mm[1] > maxScore) {
             maxScore = mm[1];
-            lineI = i;
-            charI = 'A' + mm[0];
+            charI = mm[0];
+            lineI = line_bytes;
+        } else {
+            allocator.free(line_bytes);
         }
     }
-    const candidate = try challeges.xor(&allocator, lines.items[lineI], charI);
+    const candidate = try challeges.xor(&allocator, lineI, charI);
+    defer allocator.free(lineI);
     defer allocator.free(candidate);
-    std.debug.print("GOTCHA: {s} -- {d} {c} {d:.3} \n", .{ candidate, lineI, charI, maxScore });
+    std.debug.print("Challenge 4: {s} -- {d} {d:.3} \n", .{ candidate, charI, maxScore });
 }
