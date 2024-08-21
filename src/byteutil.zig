@@ -51,7 +51,7 @@ fn byteToHex(byte: u8) []const u8 {
     return &[_]u8{ hex_chars[byte >> 4], hex_chars[byte & 0x0F] };
 }
 
-fn bytesToHex(allocator: *std.mem.Allocator, bytes: []const u8) ![]u8 {
+pub fn bytesToHex(allocator: *std.mem.Allocator, bytes: []const u8) ![]u8 {
     var hexString = try allocator.alloc(u8, bytes.len * 2);
     for (0.., bytes) |idx, byte| {
         const hex = byteToHex(byte);
@@ -76,4 +76,16 @@ pub fn fixedXor(allocator: *std.mem.Allocator, a: []const u8, b: []const u8) ![]
     }
     const hex = try bytesToHex(allocator, result);
     return hex;
+}
+
+pub fn repeatingKeyXor(allocator: *std.mem.Allocator, plaintext: []const u8, key: []const u8) ![]u8 {
+    var result: []u8 = try allocator.alloc(u8, plaintext.len);
+
+    var k: usize = 0;
+    var i: usize = 0;
+    while (i < plaintext.len) : (i += 1) {
+        result[i] = plaintext[i] ^ key[k];
+        k = (k + 1) % key.len;
+    }
+    return result;
 }

@@ -49,4 +49,11 @@ pub fn main() !void {
     defer allocator.free(lineI);
     defer allocator.free(candidate);
     std.debug.print("Challenge 4: {s} -- {d} {d:.3} \n", .{ candidate, charI, maxScore });
+
+    // challenge 5
+    const challenge5 = try byteutil.repeatingKeyXor(&allocator, "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal", "ICE");
+    defer allocator.free(challenge5);
+    const c5print = try byteutil.bytesToHex(&allocator, challenge5);
+    defer allocator.free(c5print);
+    std.debug.print("Challenge 5: {s} \n", .{c5print});
 }
