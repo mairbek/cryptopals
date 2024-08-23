@@ -24,6 +24,7 @@ pub fn main() !void {
         3 => try runChallenge3(allocator),
         4 => try runChallenge4(allocator),
         5 => try runChallenge5(allocator),
+        6 => try runChallenge6(allocator),
         else => std.debug.print("Invalid challenge number: {d}\n", .{challenge_number}),
     }
 }
@@ -87,4 +88,26 @@ fn runChallenge5(allocator: std.mem.Allocator) !void {
     const c5print = try byteutil.bytesToHex(allocator, challenge5);
     defer allocator.free(c5print);
     std.debug.print("Challenge 5: {s} \n", .{c5print});
+}
+
+fn runChallenge6(allocator: std.mem.Allocator) !void {
+    // Get the current working directory
+    const cwd = std.fs.cwd();
+    const file = try cwd.openFile("6.txt", .{});
+    defer file.close();
+
+    // Read the entire file as text
+    var buf_reader = std.io.bufferedReader(file.reader());
+    var in_stream = buf_reader.reader();
+    var buf: [1024]u8 = undefined;
+    while (try in_stream.readUntilDelimiterOrEof(&buf, '\n')) |line| {
+        std.debug.print("{s}\n", .{line});
+
+        const decoded_max_size = line.len / 4 * 3 + 3;
+        const decoded = try allocator.alloc(u8, decoded_max_size);
+        defer std.heap.page_allocator.free(decoded);
+
+        // Decode the Base64 content
+        try std.base64.standard.Decoder.decode(decoded, line);
+    }
 }
