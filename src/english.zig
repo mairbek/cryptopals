@@ -44,13 +44,13 @@ pub fn scoreText(bytes: []const u8) f32 {
 }
 
 pub fn maxScore(bytes: []const u8, from: u8, to: u8) !struct { u8, f32 } {
-    var allocator = std.heap.page_allocator;
+    const allocator = std.heap.page_allocator;
 
     var maxS: f32 = 0;
     var maxI: u8 = 0;
     var i: u8 = from;
     while (i <= to) : (i += 1) {
-        const candidate = try byteutil.xor(&allocator, bytes, i);
+        const candidate = try byteutil.xor(allocator, bytes, i);
         const score = scoreText(candidate);
         if (score > maxS) {
             maxS = score;

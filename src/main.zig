@@ -3,22 +3,52 @@ const byteutil = @import("byteutil.zig");
 const english = @import("english.zig");
 
 pub fn main() !void {
-    var allocator = std.heap.page_allocator;
+    const allocator = std.heap.page_allocator;
+    const args = try std.process.argsAlloc(allocator);
+    defer std.process.argsFree(allocator, args);
 
-    const challenge1 = try byteutil.convertHexToBase64(&allocator, "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d");
+    if (args.len < 2) {
+        std.debug.print("Usage: {s} <challenge_number>\n", .{args[0]});
+        return;
+    }
+
+    const challenge_number = std.fmt.parseInt(u32, args[1], 10) catch {
+        std.debug.print("Invalid challenge number: {s}\n", .{args[1]});
+        return;
+    };
+
+    // TODO(mairbek): make this compile time.
+    switch (challenge_number) {
+        1 => try runChallenge1(allocator),
+        2 => try runChallenge2(allocator),
+        3 => try runChallenge3(allocator),
+        4 => try runChallenge4(allocator),
+        5 => try runChallenge5(allocator),
+        else => std.debug.print("Invalid challenge number: {d}\n", .{challenge_number}),
+    }
+}
+
+fn runChallenge1(allocator: std.mem.Allocator) !void {
+    const challenge1 = try byteutil.convertHexToBase64(allocator, "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d");
     defer allocator.free(challenge1);
     std.debug.print("Challenge 1 {s} \n", .{challenge1});
+}
 
-    const challenge2 = try byteutil.fixedXor(&allocator, "1c0111001f010100061a024b53535009181c", "686974207468652062756c6c277320657965");
+fn runChallenge2(allocator: std.mem.Allocator) !void {
+    const challenge2 = try byteutil.fixedXor(allocator, "1c0111001f010100061a024b53535009181c", "686974207468652062756c6c277320657965");
     defer allocator.free(challenge2);
     std.debug.print("Challenge 2 {s} \n", .{challenge2});
+}
 
-    const challenge3bytes = try byteutil.hexToBytes(&allocator, "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736");
+fn runChallenge3(allocator: std.mem.Allocator) !void {
+    const challenge3bytes = try byteutil.hexToBytes(allocator, "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736");
     defer allocator.free(challenge3bytes);
     const min = try english.maxScore(challenge3bytes, 'A', 'Z');
-    const res = try byteutil.xor(&allocator, challenge3bytes, min[0]);
+    const res = try byteutil.xor(allocator, challenge3bytes, min[0]);
     std.debug.print("Challenge 3 '{s}' {c} {d:.3}\n", .{ res, min[0], min[1] });
+}
 
+fn runChallenge4(allocator: std.mem.Allocator) !void {
     // Get the current working directory
     const cwd = std.fs.cwd();
     const file = try cwd.openFile("4.txt", .{});
@@ -35,7 +65,7 @@ pub fn main() !void {
     var charI: u8 = 0;
     var lineI: []const u8 = undefined;
     while (try in_stream.readUntilDelimiterOrEof(&buf, '\n')) |line| {
-        const line_bytes = try byteutil.hexToBytes(&allocator, line);
+        const line_bytes = try byteutil.hexToBytes(allocator, line);
         const mm = try english.maxScore(line_bytes, 0, 0xfe);
         if (mm[1] > maxScore) {
             maxScore = mm[1];
@@ -45,15 +75,16 @@ pub fn main() !void {
             allocator.free(line_bytes);
         }
     }
-    const candidate = try byteutil.xor(&allocator, lineI, charI);
+    const candidate = try byteutil.xor(allocator, lineI, charI);
     defer allocator.free(lineI);
     defer allocator.free(candidate);
     std.debug.print("Challenge 4: {s} -- {d} {d:.3} \n", .{ candidate, charI, maxScore });
+}
 
-    // challenge 5
-    const challenge5 = try byteutil.repeatingKeyXor(&allocator, "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal", "ICE");
+fn runChallenge5(allocator: std.mem.Allocator) !void {
+    const challenge5 = try byteutil.repeatingKeyXor(allocator, "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal", "ICE");
     defer allocator.free(challenge5);
-    const c5print = try byteutil.bytesToHex(&allocator, challenge5);
+    const c5print = try byteutil.bytesToHex(allocator, challenge5);
     defer allocator.free(c5print);
     std.debug.print("Challenge 5: {s} \n", .{c5print});
 }
