@@ -100,14 +100,25 @@ fn runChallenge6(allocator: std.mem.Allocator) !void {
     var buf_reader = std.io.bufferedReader(file.reader());
     var in_stream = buf_reader.reader();
     var buf: [1024]u8 = undefined;
+    var arr = std.ArrayList(u8).init(allocator);
     while (try in_stream.readUntilDelimiterOrEof(&buf, '\n')) |line| {
-        std.debug.print("{s}\n", .{line});
-
         const decoded_max_size = line.len / 4 * 3 + 3;
         const decoded = try allocator.alloc(u8, decoded_max_size);
         defer std.heap.page_allocator.free(decoded);
 
         // Decode the Base64 content
         try std.base64.standard.Decoder.decode(decoded, line);
+        try arr.appendSlice(decoded);
     }
+    var min_key_size: usize = 0;
+    var min_score: f32 = 100000;
+    for (2..40) |key_size| {
+        const sc: u32 = byteutil.hamming(arr.items[0..key_size], arr.items[key_size .. key_size * 2]);
+        const scNorm: f32 = @as(f32, @floatFromInt(sc)) / @as(f32, @floatFromInt(key_size));
+        if (scNorm < min_score) {
+            min_score = scNorm;
+            min_key_size = key_size;
+        }
+    }
+    std.debug.print("key size {d} score {d}\n", .{ min_key_size, min_score });
 }
