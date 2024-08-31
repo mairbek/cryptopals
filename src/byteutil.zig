@@ -89,3 +89,16 @@ pub fn repeatingKeyXor(allocator: std.mem.Allocator, plaintext: []const u8, key:
     }
     return result;
 }
+
+pub fn hamming(a: []const u8, b: []const u8) u32 {
+    const n: usize = a.len;
+    var result: u32 = 0;
+    for (0..n) |i| {
+        var xx: u8 = a[i] ^ b[i];
+        while (xx != 0) {
+            result += (xx & 1);
+            xx = xx >> 1;
+        }
+    }
+    return result;
+}
